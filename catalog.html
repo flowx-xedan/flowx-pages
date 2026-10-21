@@ -275,7 +275,7 @@ function portal(j) {
   bc.appendChild(el('small', '', 'رصيدك الحالي'));
   bc.appendChild(el('div', 'big ' + (bal > 0.005 ? 'owe' : 'ok'), bal > 0.005 ? 'عليك ' + fmt(bal) + ' ج.م' : (bal < -0.005 ? 'ليك ' + fmt(-bal) + ' ج.م' : 'حسابك متساوي')));
   bc.appendChild(el('small', '', 'الرصيد بتاريخ ' + fd(j.asOf, true)));
-  bc.appendChild(el('small', '', 'الرابط صالح لحد ' + fd(j.expires)));
+  bc.appendChild(el('small', '', 'الرابط صالح لحد ' + fd(j.expires, true)));
   a.appendChild(bc);
   const mv = [];
   (j.invoices || []).forEach((x) => mv.push({ d: x.d, t: 'فاتورة رقم ' + x.no, s: x.m || '', a: Number(x.t) || 0, neg: false }));
