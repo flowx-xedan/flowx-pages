@@ -68,6 +68,28 @@ h2{font-family:var(--display);font-size:15px;margin:22px 0 8px;color:var(--gold)
 .trust span::before{content:"✓ ";color:var(--ok);font-weight:700}
 .foot{margin-top:18px;padding-top:12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
 .foot b{color:var(--ink)}
+
+[hidden]{display:none!important}
+.err .box,.err .note,.err .bar,.err .trust,.err .search,.err .tabs{display:none!important}
+.tabs{display:flex;gap:6px;margin-top:14px}
+.tabs button{flex:1;font:inherit;font-weight:600;padding:10px 6px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.tabs button.on{background:var(--head);color:var(--headfg);border-color:var(--head)}
+.tabs button:focus-visible,.rb:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.balc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.balc small{color:var(--muted);display:block}
+.balc .big{font-family:var(--display);font-size:30px;font-variant-numeric:tabular-nums;margin:2px 0}
+.balc .owe{color:var(--bad)}.balc .ok{color:var(--ok)}
+.mv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.mv:first-child{border-top:0}.mv .l{min-width:0}.mv .l small{color:var(--muted);display:block;font-size:12px}
+.mv .a{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.mv .a.neg{color:var(--ok)}
+details.inv{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+details.inv summary{cursor:pointer;display:flex;justify-content:space-between;gap:10px;font-weight:600}
+details.inv summary small{color:var(--muted);font-weight:400}
+.il{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px dashed var(--line);font-size:13.5px}
+.il span:first-child{min-width:0;overflow-wrap:anywhere}.il span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.rb{margin-top:8px;width:100%;font:inherit;font-weight:600;padding:10px;border-radius:10px;border:1px solid var(--gold);background:var(--goldbg);color:var(--ink);cursor:pointer}
+.sec-t{font-family:var(--display);font-size:15px;color:var(--gold);margin:18px 0 6px}
 </style>
 </head><body><div class="top">
   <div class="brand">
@@ -81,6 +103,10 @@ h2{font-family:var(--display);font-size:15px;margin:22px 0 8px;color:var(--gold)
   <input class="search" id="q" type="search" placeholder="ابحث عن صنف أو شركة" aria-label="بحث">
 </div>
 <div class="trust"><span>مفيش تسجيل ولا دفع على الصفحة</span><span>اختار الكميات وابعت الطلب على واتساب</span><span>الطلب بيتأكد معاك قبل التجهيز</span></div>
+<nav class="tabs" id="tabs" hidden><button type="button" data-t="acct" class="on">حسابي</button><button type="button" data-t="inv">فواتيري</button><button type="button" data-t="cat" id="tabcat">الكتالوج</button></nav>
+<section id="sec-acct" hidden></section>
+<section id="sec-inv" hidden></section>
+<div id="sec-cat">
 <main id="app"></main>
 <div class="box">
   <input class="fld" id="who" placeholder="اسم المحل أو التاجر" autocomplete="name">
@@ -88,6 +114,7 @@ h2{font-family:var(--display);font-size:15px;margin:22px 0 8px;color:var(--gold)
   <textarea class="fld" id="nt" rows="2" placeholder="ملاحظات على الطلب (اختياري)"></textarea>
 </div>
 <p class="note">الأسعار والتوفر حسب الكتالوج وقت الإرسال، ويتأكد الطلب والإجمالي عند التجهيز.</p>
+</div>
 <div class="foot"><b id="fshop"></b><br><span id="faddr"></span><div>الصفحة دي بتفتح الواتساب بس، ومبنطلبش منك أي بيانات بنكية أو كلمة سر.</div></div>
 <div class="bar">
   <div class="tot"><b id="total">0 ج.م</b><small id="cnt">لسه ماختارتش حاجة</small></div>
@@ -214,15 +241,80 @@ $('#q').addEventListener('input', build);
 ['who', 'tel', 'nt'].forEach((id) => document.getElementById(id).addEventListener('input', summary));
 
 
-function showErr(m){ $('#app').innerHTML=''; const p=document.createElement('p'); p.className='note'; p.textContent=m; $('#app').appendChild(p); }
+function showErr(m){ document.body.classList.add('err'); $('#sec-cat').hidden = false; $('#app').innerHTML=''; const p=document.createElement('p'); p.className='note'; p.textContent=m; $('#app').appendChild(p); }
+const fd = (s, tm) => { const d = new Date(s); if (isNaN(d)) return ''; const o = { day: '2-digit', month: '2-digit', year: 'numeric' }; if (tm) { o.hour = '2-digit'; o.minute = '2-digit'; } return d.toLocaleString('en-GB', o); };
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+let HAS_CAT = false;
+function switchTab(n) {
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.t === n));
+  $('#sec-acct').hidden = n !== 'acct'; $('#sec-inv').hidden = n !== 'inv'; $('#sec-cat').hidden = n !== 'cat';
+  $('#q').hidden = n !== 'cat'; document.querySelector('.bar').hidden = n !== 'cat';
+  window.scrollTo(0, 0);
+}
+function reorder(inv) {
+  for (const k of Object.keys(cart)) delete cart[k];
+  let miss = 0;
+  for (const l of inv.items || []) {
+    const it = DATA.find((x) => x.n === l.n);
+    if (!it) { miss++; continue; }
+    const q = cart[it.i] || (cart[it.i] = { u: 0, p: 0, f: {} });
+    if (l.u === 'كرتونة') q.u += Number(l.q) || 0;
+    else if (KIND === 'R') q.p += Number(l.q) || 0;
+    else miss++;
+  }
+  build(); summary(); switchTab('cat');
+  $('#nt').value = miss ? 'ملحوظة: ' + miss + ' صنف من الفاتورة القديمة مش في الكتالوج الحالي.' : $('#nt').value;
+}
+function portal(j) {
+  $('#tabs').hidden = false; HAS_CAT = DATA.length > 0;
+  if (!HAS_CAT) $('#tabcat').hidden = true;
+  document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => switchTab(b.dataset.t)));
+  const a = $('#sec-acct');
+  const bal = Number(j.balance) || 0;
+  const bc = el('div', 'balc');
+  bc.appendChild(el('small', '', 'رصيدك الحالي'));
+  bc.appendChild(el('div', 'big ' + (bal > 0.005 ? 'owe' : 'ok'), bal > 0.005 ? 'عليك ' + fmt(bal) + ' ج.م' : (bal < -0.005 ? 'ليك ' + fmt(-bal) + ' ج.م' : 'حسابك متساوي')));
+  bc.appendChild(el('small', '', 'الرصيد بتاريخ ' + fd(j.asOf, true)));
+  bc.appendChild(el('small', '', 'الرابط صالح لحد ' + fd(j.expires)));
+  a.appendChild(bc);
+  const mv = [];
+  (j.invoices || []).forEach((x) => mv.push({ d: x.d, t: 'فاتورة رقم ' + x.no, s: x.m || '', a: Number(x.t) || 0, neg: false }));
+  (j.payments || []).forEach((x) => mv.push({ d: x.d, t: 'دفعة', s: x.m || '', a: Number(x.a) || 0, neg: true }));
+  (j.returns || []).forEach((x) => mv.push({ d: x.d, t: 'مرتجع', s: (x.n || '') + (x.s ? ' · ' + x.s : ''), a: Number(x.t) || 0, neg: true }));
+  mv.sort((p, q) => new Date(q.d) - new Date(p.d));
+  a.appendChild(el('div', 'sec-t', 'آخر الحركات'));
+  const box = el('div', 'balc');
+  if (!mv.length) box.appendChild(el('small', '', 'مفيش حركات لسه.'));
+  mv.slice(0, 40).forEach((m) => {
+    const r = el('div', 'mv'); const l = el('div', 'l', m.t); l.appendChild(el('small', '', fd(m.d) + (m.s ? ' · ' + m.s : '')));
+    r.appendChild(l); r.appendChild(el('div', 'a' + (m.neg ? ' neg' : ''), (m.neg ? '− ' : '') + fmt(m.a) + ' ج.م')); box.appendChild(r);
+  });
+  a.appendChild(box);
+  const v = $('#sec-inv');
+  v.appendChild(el('div', 'sec-t', 'فواتيرك الأخيرة'));
+  if (!(j.invoices || []).length) v.appendChild(el('p', 'note', 'مفيش فواتير لسه.'));
+  (j.invoices || []).forEach((inv) => {
+    const d = el('details', 'inv'); const s = el('summary', ''); s.appendChild(el('span', '', 'فاتورة رقم ' + inv.no + ' · ' + fmt(Number(inv.t) || 0) + ' ج.م'));
+    s.appendChild(el('small', '', fd(inv.d))); d.appendChild(s);
+    (inv.items || []).forEach((l) => {
+      const r = el('div', 'il'); r.appendChild(el('span', '', l.n)); r.appendChild(el('span', '', fmt(Number(l.q) || 0) + ' ' + (l.u || '') + ' × ' + fmt(Number(l.p) || 0) + ' = ' + fmt(Number(l.t) || 0))); d.appendChild(r);
+    });
+    if (HAS_CAT) { const b = el('button', 'rb', 'اطلب نفس الأصناف'); b.type = 'button'; b.addEventListener('click', () => reorder(inv)); d.appendChild(b); }
+    v.appendChild(d);
+  });
+  $('#who').value = String((j.customer || {}).name || '');
+  switchTab('acct');
+}
 function init(j){
+  if (j && j.revoked) return showErr('الرابط ده اتلغى. اطلب من المحل رابط جديد.');
+  if (j && j.type === 'portal' && j.expires && new Date(j.expires) < new Date()) return showErr('الرابط انتهى. اطلب من المحل رابط جديد.');
   KIND = j.kind === 'R' ? 'R' : 'G'; LABEL = String(j.label || ''); DATE = String(j.date || '').slice(0,10);
   WA_NUMBER = String(j.wa || '').replace(/\D/g, ''); DATA = Array.isArray(j.items) ? j.items : [];
   const s = j.shop || {};
   const nm = String(s.name || 'كتالوج الأسعار');
   document.title = nm + ' - كتالوج ' + LABEL;
   $('#shopname').textContent = nm; $('#fshop').textContent = nm; $('#faddr').textContent = String(s.address || '');
-  $('#sub').textContent = 'كتالوج ' + LABEL + ' · أسعار بتاريخ ' + DATE;
+  $('#sub').textContent = j.type === 'portal' ? 'حساب ' + String((j.customer || {}).name || '') : 'كتالوج ' + LABEL + ' · أسعار بتاريخ ' + DATE;
   const lg = $('#logo');
   if (typeof s.logo === 'string' && s.logo.startsWith('data:image/')) {
     const im = document.createElement('img'); im.className = 'logo'; im.alt = 'شعار ' + nm; im.src = s.logo; lg.replaceWith(im);
@@ -235,6 +327,7 @@ function init(j){
   const nn = (new URLSearchParams(location.search).get('n') || '').slice(0, 80);
   if (nn && !$('#who').value) $('#who').value = nn;
   build(); summary();
+  if (j.type === 'portal') portal(j);
 }
 (function(){
   const d = new URLSearchParams(location.search).get('d') || '';
