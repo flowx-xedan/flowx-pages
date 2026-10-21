@@ -232,6 +232,8 @@ function init(j){
     const ph = String(p.n || p).replace(/[^0-9+]/g, ''); if (!ph) return;
     const a = document.createElement('a'); a.href = 'tel:' + ph; a.textContent = (p.l ? p.l + ' ' : '') + ph; ct.appendChild(a);
   });
+  const nn = (new URLSearchParams(location.search).get('n') || '').slice(0, 80);
+  if (nn && !$('#who').value) $('#who').value = nn;
   build(); summary();
 }
 (function(){
